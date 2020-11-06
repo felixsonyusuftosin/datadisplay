@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+
+  fide-prod:
+    container_name: fidel-prod-ui
+    build:
+      context: .
+      dockerfile: prod.Dockerfile
+    ports:
+      - '1337:80'
