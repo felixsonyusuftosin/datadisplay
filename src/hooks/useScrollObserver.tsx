@@ -42,7 +42,7 @@ export const useScrollObserver = (
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [element]
+    [element, callback]
   )
 
   const IOObserver: IntersectionObserverImplement = (

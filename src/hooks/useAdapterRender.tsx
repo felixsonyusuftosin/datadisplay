@@ -12,25 +12,25 @@ type AdapterReturnType = {
   getElementContent: AdapterGetter
 }
 
-export const useAdapterRender = (): AdapterReturnType => {
-  const [hashes, setHashes] = useState(new Map())
+const defaultHash: any = {}
+
+const useAdapterRender = (): AdapterReturnType => {
+  const [hashes, setHash] = useState(defaultHash)
 
   const setElementContent: AdapterSetter = (
     key: string | number,
     value: unknown[]
   ): void => {
-    const hashesCopy: Map<string | number, unknown> = { ...hashes }
-    hashesCopy.set(key, value)
-    setHashes((hashes: Map<string | number, unknown>) => ({
-      ...hashes,
-      hashesCopy
-    }))
+    setHash((h: any) => ({ ...h, [key]: value }))
   }
 
   const getElementContent: AdapterGetter = (
     key: string | number
   ): unknown[] => {
-    return hashes.get(key)
+    return hashes[key]
   }
+
   return { setElementContent, getElementContent }
 }
+
+export default useAdapterRender
