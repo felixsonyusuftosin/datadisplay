@@ -55,6 +55,7 @@ export const useScrollObserver = (
       rootMargin: '0px',
       threshold: 0.1
     }
+
     const IO = new IntersectionObserver(cb, options)
     IO.observe(element)
   }

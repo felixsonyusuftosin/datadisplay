@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react'
 import './AdapterDisplay.css'
 import useScrollObserver from '../hooks/useScrollObserver'
 
-type AdapterDisplayProps = {
+export type AdapterDisplayProps = {
   itemsLength?: number
   unitHeight?: number
   root: HTMLElement | null
@@ -44,7 +44,7 @@ const AdapterDisplay: React.FC<AdapterDisplayProps> = ({
   const totalLength = itemsLength * unitHeight
   const containerHeight = { height: `${totalLength}px` }
   return (
-    <div ref={element} className='adapter-container' style={containerHeight}>
+    <div ref={element} role='presentation' className='adapter-container' style={containerHeight}>
       {children}
     </div>
   )

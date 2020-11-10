@@ -1,9 +1,4 @@
-import React, {
-  useRef,
-  useState,
-  useEffect,
-  ReactElement,
-} from 'react'
+import React, { useRef, useState, useEffect, ReactElement } from 'react'
 import useScrollObserver from '../hooks/useScrollObserver'
 import AdapterDisplay from '../commons/AdapterDisplay'
 import useAdapterRender from '../hooks/useAdapterRender'
@@ -11,28 +6,29 @@ import useAdapterRender from '../hooks/useAdapterRender'
 const defaultData: any[] = []
 const defaultDisplay: any[] = []
 
-type MakeApiRequest = {
-  (params: unknown[]): unknown[]
+export type MakeApiRequest = {
+  (url: string): Promise<unknown[]>
 }
-type Pagination = {
+export type Pagination = {
   currentPage: number
   nextPage: number
   totalPages: number
   limit: number
 }
 
-type RendererStyles = {
+export type RendererStyles = {
   unitHeightOfRow: number
   totalLengthOfItems: number
 }
 
-type AdapterRendererProps = {
+export type AdapterRendererProps = {
   callback: MakeApiRequest
   pagination: Pagination
   styles: RendererStyles
   LoaderElement: any
   Row: any
-  parameters?: unknown[]
+  rowProps: unknown
+  parameters: string
 }
 
 const AdapterRenderer: React.FC<AdapterRendererProps> = ({
@@ -41,7 +37,8 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
   callback,
   pagination,
   LoaderElement,
-  parameters = []
+  rowProps,
+  parameters = ''
 }): ReactElement => {
   const container = useRef(null)
   const element = useRef(null)
@@ -89,11 +86,10 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     const elements = getElementContent(callbackReference) || []
     setDisplayItems(elements)
   }
-
   return (
     <div id='container' ref={container} className='container'>
       <div className='scroller'>
-        {dataDisplay?.map(pageItem => (
+        {dataDisplay?.map((pageItem) => (
           <AdapterDisplay
             key={pageItem}
             itemsLength={styles.totalLengthOfItems}
@@ -102,7 +98,7 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
             callback={fetchRenderedItem}
             selector={pageItem}>
             {displayItems.map(dataItems => {
-              return <Row id={dataItems.id} {...dataItems} />
+              return <Row key={dataItems.id} {...dataItems} {...rowProps} />
             })}
           </AdapterDisplay>
         ))}
