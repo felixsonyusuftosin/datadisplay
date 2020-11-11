@@ -1,32 +1,12 @@
-import React, { useRef, useState, useEffect, ReactElement } from 'react'
-import useScrollObserver from '../hooks/useScrollObserver'
-import AdapterDisplay from '../commons/AdapterDisplay'
-import useAdapterRender from '../hooks/useAdapterRender'
-import { MakeApiRequest, Pagination, RendererStyles } from '../types'
-
+import React, { useRef, useState, useEffect } from 'react'
+import './App.css'
+import useScrollObserver from './hooks/useScrollObserver'
+import AdapterDisplay from './commons/AdapterDisplay'
+import useAdapterRender from './hooks/useAdapterRender'
 const defaultData: any[] = []
 const defaultDisplay: any[] = []
-
-
-export type AdapterRendererProps = {
-  callback: MakeApiRequest
-  pagination: Pagination
-  styles: RendererStyles
-  LoaderElement: any
-  Row: any
-  rowProps: unknown
-  parameters: string
-}
-
-const AdapterRenderer: React.FC<AdapterRendererProps> = ({
-  Row,
-  styles,
-  callback,
-  pagination,
-  LoaderElement,
-  rowProps,
-  parameters = ''
-}): ReactElement => {
+let count = -1
+function App() {
   const container = useRef(null)
   const element = useRef(null)
 
@@ -53,14 +33,16 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     reset: (reference: unknown) => void,
     reference: unknown
   ) => {
-    if ( pagination.nextPage) {
     setLoading(true)
-    const response = await callback.call(this, parameters)
+    const dataJSON = await fetch(
+      'http://dummy.restapiexample.com/api/v1/employees'
+    )
+    const data = await dataJSON.json()
     reset(reference)
-    setElementContent(pagination.currentPage, response)
-    setDataDisplay(d => [...d, pagination.currentPage])
+    count += 1
+    setElementContent(count, data.data)
+    setDataDisplay(d => [...d, count])
     setLoading(false)
-    }
   }
 
   const {
@@ -75,28 +57,34 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     const elements = getElementContent(callbackReference) || []
     setDisplayItems(elements)
   }
+
   return (
     <div id='container' ref={container} className='container'>
       <div className='scroller'>
-        {dataDisplay?.map((pageItem) => (
+        {dataDisplay?.map((data, index) => (
           <AdapterDisplay
-            key={pageItem}
-            itemsLength={styles.totalLengthOfItems}
-            unitHeight={styles.unitHeightOfRow}
+            key={index}
             root={container.current}
             callback={fetchRenderedItem}
-            selector={pageItem}>
-            {displayItems.map(dataItems => {
-              return <Row key={dataItems.id} {...dataItems} {...rowProps} />
+            selector={index}>
+            {displayItems.map(dItems => {
+              const values = Object.values(dItems)
+              return (
+                <div key={dItems.id} className='items'>
+                  {values.map((v, index) => (
+                    <div key={index}>{String(v)}</div>
+                  ))}
+                </div>
+              )
             })}
           </AdapterDisplay>
         ))}
         <div ref={element} id='observed' className='observed'>
-          {loading ? <LoaderElement /> : ' '}
+          {loading ? 'Loading ....' : '   '}
         </div>
       </div>
     </div>
   )
 }
 
-export default AdapterRenderer
+export default App
