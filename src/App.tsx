@@ -1,16 +1,14 @@
 import React from 'react'
-import  DataDisplay  from './components'
-import Test from './test'
-
+import DataDisplay from './components'
+import { DataDisplayProvider } from './components/context/DataDisplay.context'
 
 export const App = () => {
-  const findStuff = async () => {
-    const v = await Test()
-    console.log(v)
-  }
-  findStuff()
 
-  return <DataDisplay />
+  return (
+    <DataDisplayProvider>
+      <DataDisplay />
+    </DataDisplayProvider>
+  )
 }
 
 export default App

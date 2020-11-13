@@ -1,0 +1,52 @@
+.highlight {
+    background-color: #EEEFF3;
+}
+
+.blue { 
+  background-color:#5E99E9;
+}
+
+.blue-text {
+  color: #5E99E9;
+}
+
+.dark-text {
+  color: #0E4366;
+}
+.white {
+  background: white;
+}
+.white-text{
+  color: #fff;
+}
+.light-text {
+  color: #8D8E92;
+}
+.rotate { 
+  transition: transform 0.5s;
+  -webkit-transition: transform 0.5s;
+  -moz-transition: transform 0.5s;
+  -ms-transition: transform 0.5s;
+  -o-transition: transform 0.5s;
+}
+.rotate:hover {
+ transform: rotate(180deg);
+ -webkit-transform: rotate(180deg);
+ -moz-transform: rotate(180deg);
+ -ms-transform: rotate(180deg);
+ -o-transform: rotate(180deg);
+}
+
+.data-display-skeleton {
+  display: grid;
+  overflow-y: auto;
+  grid-template-rows:30% 65%;
+  height: 100vh;
+}
+
+.truncate {
+  width: 96%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

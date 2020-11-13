@@ -10,7 +10,7 @@ import {
 const defaultPagination: Pagination = {
   limit: 50,
   currentPage: 1,
-  nextPage: null
+  nextPage: 2
 }
 
 type ReducerActionPayloadType = {

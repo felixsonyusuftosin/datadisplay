@@ -26,7 +26,7 @@ export const makeRestApiCall = async (url: string, config = {}) => {
       ...config,
       url
     }
-    console.log(updatedConfigurations)
+    
    const response = await axios(updatedConfigurations)
    const { data, status }  = response || {}
     if (status === 404) {

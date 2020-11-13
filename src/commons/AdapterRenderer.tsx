@@ -14,7 +14,7 @@ export type AdapterRendererProps = {
   styles: RendererStyles
   LoaderElement: any
   Row: any
-  rowProps: unknown
+  rowProps?: unknown
   parameters: string
 }
 
@@ -53,14 +53,14 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     reset: (reference: unknown) => void,
     reference: unknown
   ) => {
-    if ( pagination.nextPage) {
+   //if ( pagination.nextPage) {
     setLoading(true)
     const response = await callback.call(this, parameters)
     reset(reference)
     setElementContent(pagination.currentPage, response)
     setDataDisplay(d => [...d, pagination.currentPage])
     setLoading(false)
-    }
+  //  }
   }
 
   const {

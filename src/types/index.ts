@@ -17,7 +17,7 @@ export type RendererStyles = {
 export type Card = {
   id: string,
   lastNumbers: string,
-  schema: string
+  scheme: string
 }
 export type TransactionLocation = {
   address: string,
@@ -55,7 +55,10 @@ export type TransactionItem = {
   created: string,
   updated: string,
   amount: number,
+  auth?: boolean,
   cleared: boolean,
+  wallet?: string | null
+  offer?: string | null
   datetime: string,
   card: Card,
   location: TransactionLocation,
@@ -70,4 +73,11 @@ export type Transactions = {
   status: number,
   execution: number
   last?: LastTransaction
+}
+
+export type DataDisplayContextState = {
+  pagination: Pagination
+  fetchingTransactions: boolean
+  fetchedTransactions: Transactions | null
+  errorFetchingTransactions: string | null
 }

@@ -5,7 +5,8 @@ import React, {
   useEffect,
   useReducer,
   useMemo,
-  useCallback
+  useCallback,
+  useRef
 } from 'react'
 import {
   UPDATE_PAGINATION,
@@ -13,13 +14,20 @@ import {
   FETCHED_TRANSACTIONS,
   ERROR_FETCHING_TRANSACTIONS
 } from './action'
-import { Transactions } from '../../types'
+import { DataDisplayContextState, Transactions } from '../../types'
 import { makeRestApiCall } from '../makeApiRequest'
 import { getFirstDayOfYear } from '../../utils/dates'
 import { DataDisplayReducer, initState } from './DataDisplayReducer'
 
 const DataDisplayContext: any = createContext({})
-let componentIsMounted: boolean
+const PROGRAM_ID = process.env.REACT_APP_PROGRAM_ID || ''
+const url = `programs/${PROGRAM_ID}/transactions`
+
+type UseDataDisplay = { 
+  callback: () => Promise<any>,
+  state: DataDisplayContextState,
+  transactionsUrl: string
+}
 
 const useDataDisplay = () => {
   const context = useContext(DataDisplayContext)
@@ -32,6 +40,8 @@ const useDataDisplay = () => {
   return context
 }
 
+
+
 const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
   const [state, dispatch] = useReducer(DataDisplayReducer, initState)
   const [paginationParameters, setPaginationParameters] = useState({
@@ -41,49 +51,56 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
     to: new Date()
   })
   const [transactionsUrl, setTransactionsUrl] = useState('')
-  const PROGRAM_ID = process.env.REACT_APP_PROGRAM_ID || ''
+  const componentIsMountedRef = useRef(false)
 
+  const constructPaginationUrlParameters = (): string => { 
+    const param = new URLSearchParams()
+    const start = paginationParameters.last && JSON.stringify(paginationParameters.last)
+    const limit = paginationParameters.limit
+    const from = paginationParameters.from.toISOString()
+    const to = paginationParameters.to.toISOString()
+
+    if (start ) {
+      param.set('start', start)
+    }
+    param.set('limit', String(limit))
+    param.set('from', from)
+    param.set('to', to)
+
+    return param.toString()
+  }
   useEffect(() => {
-    componentIsMounted = true
-    if (componentIsMounted) {
-      const url = `programs/${PROGRAM_ID}/transactions`
-      
-      setTransactionsUrl(() => url)
+    componentIsMountedRef.current = true
+    if (componentIsMountedRef.current) {
+     const queryParameters = constructPaginationUrlParameters()
+
+      const computedUrl = `${url}?${queryParameters}`
+      setTransactionsUrl(() => computedUrl)
     }
     return () => {
-      componentIsMounted = false
+      componentIsMountedRef.current = false
     }
-  }, [PROGRAM_ID, setTransactionsUrl])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [PROGRAM_ID, componentIsMountedRef])
+
+
 
   useEffect(() => {
-    if (componentIsMounted) {
-      const start = JSON.stringify(paginationParameters.last)
-      const limit = paginationParameters.limit
-      const from = paginationParameters.from.toISOString()
-      const to = paginationParameters.to.toISOString()
-      const url = `programs/${PROGRAM_ID}/transactions`
-      const param = new URLSearchParams()
-
-      param.set('start', start)
-      param.set('limit', String(limit))
-      param.set('from', from)
-      param.set('to', to)
-
+    if (componentIsMountedRef.current) {
+      const queryParameters = constructPaginationUrlParameters()
       const newContextPagination = {
         ...state.pagination,
         limit: paginationParameters.limit,
         nextPage: JSON.stringify(state?.fetchedTransactions?.last)
       }
-
       dispatch({ type: UPDATE_PAGINATION, payload: newContextPagination })
-      setTransactionsUrl(`${url}?${param.toString()}`)
+      setTransactionsUrl(`${url}?${queryParameters}`)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     paginationParameters,
     PROGRAM_ID,
-    setTransactionsUrl,
-    state.pagination,
-    state?.fetchedTransactions?.last
+    componentIsMountedRef
   ])
 
   const callback = useCallback(async () => {
@@ -108,9 +125,10 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
   const contextValue = useMemo(
     () => ({
       state,
-      callback
+      callback,
+      transactionsUrl
     }),
-    [state, callback]
+    [state, callback, transactionsUrl]
   )
 
   return <DataDisplayContext.Provider value={contextValue} {...restProps} />
