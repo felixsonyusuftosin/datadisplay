@@ -5,6 +5,7 @@ import { setupServer } from 'msw/node'
 import 'intersection-observer'
 import 'requestidlecallback'
 import AdapterRenderer from './AdapterRenderer'
+import AppLoader from '../components/dataDisplay/body/AppLoader';
 
 const server = setupServer(
   rest.get('/test', (req, res, ctx) => {
@@ -26,7 +27,7 @@ const pagination = {
   currentPage: 1,
   nextPage: 2,
   totalPages: 10,
-  limit: 24
+  limit: 24,
 }
 
 const rendererStyles = {
@@ -60,7 +61,8 @@ const adapterRendererProps = {
   LoaderElement,
   Row,
   rowProps: {},
-  parameters: '/test'
+  parameters: '/test',
+  AppLoader
 }
 
 describe('AdapterRenderer', () => {

@@ -47,7 +47,7 @@ const AdapterDisplay: React.FC<AdapterDisplayProps> = ({
     <div ref={element} role='presentation' className='adapter-container' style={containerHeight}>
       {children}
     </div>
-  )
+  ) 
 }
 
 export default AdapterDisplay

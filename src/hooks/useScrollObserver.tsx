@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 declare const requestIdleCallback: any
 declare const cancelIdleCallback: any
@@ -25,10 +25,10 @@ type ScrollObserverOutputs = {
 export const useScrollObserver = (
   container: HTMLElement | null,
   element: Element | null,
-  callback: UseScrollObserverCallback<unknown>
+  callback: UseScrollObserverCallback<void>
 ): ScrollObserverOutputs => {
 
-  const callbackReference = useRef(null)
+  const [callbackReference, setCallbackReference] = useState(null)
   const indicatedEntry: IntersectionObserverCallback = React.useCallback(
     (
       entries: IntersectionObserverEntry[],
@@ -61,13 +61,13 @@ export const useScrollObserver = (
   }
 
   const handleCallbackActionAsynchronously = (
-    cb: UseScrollObserverCallback<unknown>
+    cb: UseScrollObserverCallback<void| unknown>
   ): unknown | null => {
     const timeout = 1000
     const options = { timeout }
-    if (!callbackReference.current) {
+    if (!callbackReference) {
       const id = requestIdleCallback(cb, options)
-      callbackReference.current = id
+      setCallbackReference(id)
       return id
     }
     return null
@@ -75,7 +75,7 @@ export const useScrollObserver = (
 
   const resetCallbackMethod = (id: unknown): void => {
     id && cancelIdleCallback(id)
-    callbackReference.current = null
+   setCallbackReference(null)
   }
 
   useEffect((): void => {
@@ -85,7 +85,7 @@ export const useScrollObserver = (
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [container, element])
 
-  return { callbackReference: callbackReference.current, resetCallbackMethod }
+  return { callbackReference: callbackReference, resetCallbackMethod }
 }
 
 export default useScrollObserver

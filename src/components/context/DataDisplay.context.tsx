@@ -14,20 +14,14 @@ import {
   FETCHED_TRANSACTIONS,
   ERROR_FETCHING_TRANSACTIONS
 } from './action'
-import { DataDisplayContextState, Transactions } from '../../types'
+import { Transactions } from '../../types'
 import { makeRestApiCall } from '../makeApiRequest'
-import { getFirstDayOfYear } from '../../utils/dates'
-import { DataDisplayReducer, initState } from './DataDisplayReducer'
+import { DataDisplayReducer } from './DataDisplayReducer'
+import { paginationParameterContextDefaults, initState } from '../default.data'
 
 const DataDisplayContext: any = createContext({})
 const PROGRAM_ID = process.env.REACT_APP_PROGRAM_ID || ''
 const url = `programs/${PROGRAM_ID}/transactions`
-
-type UseDataDisplay = { 
-  callback: () => Promise<any>,
-  state: DataDisplayContextState,
-  transactionsUrl: string
-}
 
 const useDataDisplay = () => {
   const context = useContext(DataDisplayContext)
@@ -40,68 +34,61 @@ const useDataDisplay = () => {
   return context
 }
 
-
-
 const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
   const [state, dispatch] = useReducer(DataDisplayReducer, initState)
-  const [paginationParameters, setPaginationParameters] = useState({
-    last: null,
-    limit: 50,
-    from: getFirstDayOfYear(),
-    to: new Date()
-  })
+  const [paginationParameters, setPaginationParameters] = useState(
+    paginationParameterContextDefaults
+  )
   const [transactionsUrl, setTransactionsUrl] = useState('')
   const componentIsMountedRef = useRef(false)
 
-  const constructPaginationUrlParameters = (): string => { 
+  const constructPaginationUrlParameters = useCallback((): string => {
     const param = new URLSearchParams()
-    const start = paginationParameters.last && JSON.stringify(paginationParameters.last)
+    const start =
+      paginationParameters.last && JSON.stringify(paginationParameters.last)
     const limit = paginationParameters.limit
     const from = paginationParameters.from.toISOString()
     const to = paginationParameters.to.toISOString()
 
-    if (start ) {
+    if (start) {
       param.set('start', start)
     }
     param.set('limit', String(limit))
-    param.set('from', from)
-    param.set('to', to)
+    // param.set('from', from)
+    // param.set('to', to)
 
     return param.toString()
-  }
+  }, [
+    paginationParameters.from,
+    paginationParameters.last,
+    paginationParameters.limit,
+    paginationParameters.to
+  ])
+  
+  // update local pagination parameters when context parameter changes to set the next url
   useEffect(() => {
     componentIsMountedRef.current = true
     if (componentIsMountedRef.current) {
-     const queryParameters = constructPaginationUrlParameters()
-
+      const queryParameters = constructPaginationUrlParameters()
       const computedUrl = `${url}?${queryParameters}`
       setTransactionsUrl(() => computedUrl)
     }
     return () => {
       componentIsMountedRef.current = false
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [PROGRAM_ID, componentIsMountedRef])
+  }, [componentIsMountedRef, constructPaginationUrlParameters])
 
+  const resetPaginationData = () => {
+    dispatch({ type: UPDATE_PAGINATION, payload: { ...initState.pagination } })
+    setPaginationParameters(paginationParameterContextDefaults)
+  }
 
-
-  useEffect(() => {
-    if (componentIsMountedRef.current) {
-      const queryParameters = constructPaginationUrlParameters()
-      const newContextPagination = {
-        ...state.pagination,
-        limit: paginationParameters.limit,
-        nextPage: JSON.stringify(state?.fetchedTransactions?.last)
-      }
-      dispatch({ type: UPDATE_PAGINATION, payload: newContextPagination })
-      setTransactionsUrl(`${url}?${queryParameters}`)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    paginationParameters,
-    PROGRAM_ID,
-    componentIsMountedRef
-  ])
+  // data clean up when component un mounts
+  useEffect((): (() => void) => {
+    componentIsMountedRef.current && resetPaginationData()
+    return () => componentIsMountedRef.current && resetPaginationData()
+  }, [componentIsMountedRef])
+  
 
   const callback = useCallback(async () => {
     dispatch({ type: FETCHING_TRANSACTIONS })
@@ -109,24 +96,35 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
       const { data } = await makeRestApiCall(transactionsUrl)
 
       dispatch({ type: FETCHED_TRANSACTIONS, payload: data })
-      const { last } = data as Transactions
-
+      const { last, items } = data as Transactions
+      const newContextPagination = {
+        ...state.pagination,
+        currentPage: +state.pagination.currentPage + 1,
+        nextPage: last && JSON.stringify(last),
+        limit: items.length
+      }
+      dispatch({
+        type: UPDATE_PAGINATION,
+        payload: { ...newContextPagination }
+      })
       setPaginationParameters((p: any) => ({
         ...p,
-        last,
-        currentPage: p.last || 1
+        currentPage: p.currentPage += 1,
+        last
       }))
       return data.items
     } catch (error) {
       dispatch({ type: ERROR_FETCHING_TRANSACTIONS, payload: error.message })
     }
-  }, [transactionsUrl])
+
+  }, [state.pagination, transactionsUrl])
 
   const contextValue = useMemo(
     () => ({
       state,
       callback,
-      transactionsUrl
+      transactionsUrl,
+      resetPaginationData
     }),
     [state, callback, transactionsUrl]
   )

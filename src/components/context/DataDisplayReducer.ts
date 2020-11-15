@@ -1,4 +1,5 @@
 import { DataDisplayContextState, Pagination, Transactions } from '../../types'
+import { initState } from '../default.data'
 import {
   ACTION_TYPE,
   UPDATE_PAGINATION,
@@ -7,22 +8,11 @@ import {
   ERROR_FETCHING_TRANSACTIONS
 } from './action'
 
-const defaultPagination: Pagination = {
-  limit: 50,
-  currentPage: 1,
-  nextPage: 2
-}
+
 
 type ReducerActionPayloadType = {
   type: ACTION_TYPE
   payload?: Pagination | unknown[] | unknown | string | null
-}
-
-export const initState: DataDisplayContextState = {
-  pagination: defaultPagination,
-  fetchingTransactions: false,
-  fetchedTransactions: null,
-  errorFetchingTransactions: null
 }
 
 export const DataDisplayReducer = (

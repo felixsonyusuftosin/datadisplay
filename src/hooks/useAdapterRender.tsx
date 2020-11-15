@@ -7,9 +7,13 @@ type AdapterSetter = {
 type AdapterGetter = {
   (key: string | number): unknown[]
 }
+type AdapterReset = {
+  (): {}
+}
 type AdapterReturnType = {
   setElementContent: AdapterSetter
   getElementContent: AdapterGetter
+  resetElementContent: AdapterReset
 }
 
 const defaultHash: any = {}
@@ -18,7 +22,7 @@ const useAdapterRender = (): AdapterReturnType => {
   const [hashes, setHash] = useState(defaultHash)
 
   const setElementContent: AdapterSetter = (
-    key: string | number,
+    key: string | number, 
     value: unknown[]
   ): void => {
     setHash((h: any) => ({ ...h, [key]: value }))
@@ -30,7 +34,13 @@ const useAdapterRender = (): AdapterReturnType => {
     return hashes[key]
   }
 
-  return { setElementContent, getElementContent }
+  const resetElementContent: AdapterReset = (): {} => {
+    console.log('resetting hash ')
+    setHash({})
+    return {}
+  }
+
+  return { setElementContent, getElementContent, resetElementContent }
 }
 
 export default useAdapterRender

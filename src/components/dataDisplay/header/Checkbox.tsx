@@ -25,7 +25,6 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   }
 
   const className = isChecked ? 'checkbox-selected' : 'checkbox'
-  console.log(isChecked, className, ' ===>')
   return (
     <div onClick={handleChange} className='checkbox-container'>
       <div className={className} />

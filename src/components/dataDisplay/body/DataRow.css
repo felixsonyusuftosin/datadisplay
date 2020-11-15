@@ -2,7 +2,7 @@
   height:60px;
   box-sizing:border-box;
   font-size:1.2rem;
-  border-bottom:solid 1px rgba(0,0,0,0.4);
+  border-bottom:solid 1px rgba(0,0,0,0.1);
   padding: 0px 40px;
   box-sizing:border-box;
 }
@@ -10,4 +10,8 @@
   height: 100%;
   padding: 0px;
   line-height: 60px;
+}
+.skeleton  {
+  height: 40px;
+  width: 100%;
 }
