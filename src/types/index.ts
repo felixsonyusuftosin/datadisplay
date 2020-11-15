@@ -1,6 +1,6 @@
 
 export type MakeApiRequest = {
-  (url: string): Promise<unknown[]>
+  (url: string): Promise<TransactionItem[]>
 }
 export type Pagination = {
   currentPage: number | string
@@ -80,4 +80,9 @@ export type DataDisplayContextState = {
   fetchingTransactions: boolean
   fetchedTransactions: Transactions | null
   errorFetchingTransactions: string | null
+}
+
+export type HashType<T> = {
+  key?: number | string
+  value?: T
 }

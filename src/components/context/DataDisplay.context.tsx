@@ -14,7 +14,7 @@ import {
   FETCHED_TRANSACTIONS,
   ERROR_FETCHING_TRANSACTIONS
 } from './action'
-import { Transactions } from '../../types'
+import { TransactionItem, Transactions } from '../../types'
 import { makeRestApiCall } from '../makeApiRequest'
 import { DataDisplayReducer } from './DataDisplayReducer'
 import { paginationParameterContextDefaults, initState } from '../default.data'
@@ -76,7 +76,7 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
     return () => {
       componentIsMountedRef.current = false
     }
-  }, [componentIsMountedRef, constructPaginationUrlParameters])
+  }, [componentIsMountedRef, constructPaginationUrlParameters, paginationParameters])
 
   const resetPaginationData = () => {
     dispatch({ type: UPDATE_PAGINATION, payload: { ...initState.pagination } })
@@ -90,7 +90,7 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
   }, [componentIsMountedRef])
   
 
-  const callback = useCallback(async () => {
+  const callback = useCallback(async (): Promise<TransactionItem[]| undefined> => {
     dispatch({ type: FETCHING_TRANSACTIONS })
     try {
       const { data } = await makeRestApiCall(transactionsUrl)
@@ -124,9 +124,11 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
       state,
       callback,
       transactionsUrl,
-      resetPaginationData
+      resetPaginationData,
+      setPaginationParameters,
+      paginationParameters
     }),
-    [state, callback, transactionsUrl]
+    [state, callback, transactionsUrl, paginationParameters]
   )
 
   return <DataDisplayContext.Provider value={contextValue} {...restProps} />

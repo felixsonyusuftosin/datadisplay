@@ -6,6 +6,7 @@ import 'intersection-observer'
 import 'requestidlecallback'
 import AdapterRenderer from './AdapterRenderer'
 import AppLoader from '../components/dataDisplay/body/AppLoader';
+import { TransactionItem } from '../types'
 
 const server = setupServer(
   rest.get('/test', (req, res, ctx) => {
@@ -17,7 +18,7 @@ beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-const callback = async (url: string): Promise<unknown[]> => {
+const callback = async (url: string): Promise<TransactionItem[]> => {
   const dataResponse = await fetch(url)
   const data = await dataResponse.json()
   return data
@@ -62,7 +63,8 @@ const adapterRendererProps = {
   Row,
   rowProps: {},
   parameters: '/test',
-  AppLoader
+  AppLoader,
+  resetPaginationData: () => null
 }
 
 describe('AdapterRenderer', () => {

@@ -12,6 +12,14 @@ import {
 const defaultData: any[] = []
 const defaultDisplay: any[] = []
 
+type PaginationParameters = {
+  currentPage: number
+  last: null
+  limit: number
+  from: Date
+  to: Date
+}
+
 export type AdapterRendererProps = {
   callback: MakeApiRequest
   pagination: Pagination
@@ -21,6 +29,9 @@ export type AdapterRendererProps = {
   rowProps?: unknown
   parameters: string
   AppLoader: React.FC<{}>
+  resetPaginationData: () => void
+  setPaginationParameters?: React.Dispatch<React.SetStateAction<PaginationParameters>>
+  paginationParameters?: PaginationParameters
 }
 
 const AdapterRenderer: React.FC<AdapterRendererProps> = ({
@@ -31,7 +42,9 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
   LoaderElement,
   rowProps,
   parameters = '',
-  AppLoader
+  AppLoader,
+  resetPaginationData,
+  paginationParameters
 }): ReactElement => {
   const container = useRef(null)
   const element = useRef(null)
@@ -61,13 +74,27 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     getElementContent,
     resetElementContent
   } = useAdapterRender()
+
   const refresh = () => {
+    resetPaginationData()
     resetElementContent()
     setDataDisplay(defaultDisplay)
     setDisplayItems([])
   }
+
+  const fetchInitialData = async () => {
+    const reset = resetCallbackMethod
+    const reference = callbackReference
+    setAppLoading(true)
+    const response : TransactionItem[] = await callback.call(this, parameters)
+    reset(reference)
+    setElementContent(pagination.currentPage, response)
+    setDataDisplay(d => [...d, pagination.currentPage])
+    setAppLoading(false)
+    return
+  }
+
   useEffect((): (() => void) => {
-    console.log('res etting element content ===>')
     refresh()
     return () => refresh()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,17 +135,8 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
   ])
 
   useEffect(() => {
-    const fetchInitialData = async (reset: any, reference: unknown) => {
-      setAppLoading(true)
-      const response = await callback.call(this, parameters)
-      reset(reference)
-      setElementContent(pagination.currentPage, response)
-      setDataDisplay(d => [...d, pagination.currentPage])
-      setAppLoading(false)
-      return
-    }
     if (pagination.currentPage === 0 && !appLoading && !loading && parameters) {
-      fetchInitialData(resetCallbackMethod, callbackReference)
+      fetchInitialData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination, parameters])

@@ -1,14 +1,21 @@
-import React, { useEffect} from 'react'
+import React from 'react'
 import AdapterRenderer from '../../../commons/AdapterRenderer'
 import { RendererStyles } from '../../../types'
 import { useDataDisplay } from '../../context/DataDisplay.context'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import DataRow from './DataRow'
 import './TableBody.css'
-import AppLoader from '../../dataDisplay/body/AppLoader';
+import AppLoader from '../../dataDisplay/body/AppLoader'
 
 export const TableBody = () => {
-  const { state, callback, transactionsUrl, resetPaginationData } = useDataDisplay() as any
+  const {
+    state,
+    callback,
+    transactionsUrl,
+    resetPaginationData,
+    setPaginationParameters,
+    paginationParameters
+  } = useDataDisplay() as any
   const { pagination } = state
   const { limit } = pagination
   const styles: RendererStyles = {
@@ -21,22 +28,18 @@ export const TableBody = () => {
     </div>
   )
 
-  useEffect(() => {
-    resetPaginationData()
-    return () => resetPaginationData()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[])
-
-
   return (
     <div className='table-container'>
       <AdapterRenderer
         AppLoader={AppLoader}
+        resetPaginationData={resetPaginationData}
         callback={callback}
         parameters={transactionsUrl}
         styles={styles}
         LoaderElement={LoaderElement}
         Row={DataRow}
+        paginationParameters={paginationParameters}
+        setPaginationParameters={setPaginationParameters}
         pagination={pagination}
       />
     </div>
