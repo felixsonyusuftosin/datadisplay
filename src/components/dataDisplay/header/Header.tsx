@@ -34,7 +34,11 @@ const Search = ({ ...props }) => {
   )
 }
 
-export const Header = () => {
+type HeaderProps = { 
+  toggleFilter: () => void
+}
+
+export const Header: React.FC<HeaderProps> = ({ toggleFilter}) => {
   return (
     <nav className='highlight'>
       <div className='row'>
@@ -58,7 +62,7 @@ export const Header = () => {
           <Typography variant='body1' className='dark-text truncate'>
             Results from Last Year
           </Typography>
-          <FilterListIcon className='filter dark-text' />
+          <FilterListIcon onClick={toggleFilter} className='filter dark-text' />
           <GetAppIcon className='filter dark-text' />
         </div>
       </div>

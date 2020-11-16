@@ -22,6 +22,12 @@
 .light-text {
   color: #8D8E92;
 }
+.modal-class { 
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content:  center;
+}
 .rotate { 
   transition: transform 0.5s;
   -webkit-transition: transform 0.5s;

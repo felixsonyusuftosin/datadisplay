@@ -13,8 +13,8 @@ export const TableBody = () => {
     callback,
     transactionsUrl,
     resetPaginationData,
-    setPaginationParameters,
-    paginationParameters
+    setFilterParameters,
+    filterParameters
   } = useDataDisplay() as any
   const { pagination } = state
   const { limit } = pagination
@@ -38,8 +38,8 @@ export const TableBody = () => {
         styles={styles}
         LoaderElement={LoaderElement}
         Row={DataRow}
-        paginationParameters={paginationParameters}
-        setPaginationParameters={setPaginationParameters}
+        filterParameters={filterParameters}
+        setFilterParameters={setFilterParameters}
         pagination={pagination}
       />
     </div>

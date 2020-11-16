@@ -6,9 +6,12 @@ import { formatCurrency$ } from '../../../utils/currency'
 import { formatDate } from '../../../utils/dates'
 import Checkbox from '../header/Checkbox'
 
-enum ImageOptions {
-  masterCard = 'https://avatars.sched.co/7/e0/7507288/avatar.jpg?c05',
-  visa = 'https://e7.pngegg.com/pngimages/594/666/png-clipart-visa-logo-credit-card-debit-card-payment-card-bank-visa-blue-text.png'
+const masterCardLogo = process.env.REACT_APP_MASTERCARD_LOGO as string 
+const visaCardLogo = process.env.REACT_APP_VISA_LOGO as string 
+
+const ImageOptions =  {
+  masterCard: masterCardLogo || '',
+  visa: visaCardLogo || ''
 }
 
 export const DataRow: React.FC<TransactionItem> = (item: TransactionItem) => {
@@ -59,7 +62,6 @@ export const DataRow: React.FC<TransactionItem> = (item: TransactionItem) => {
       </div>
       <div className='column center'>
         <img src={schemaImage()} className='card-type-image' alt='schema' />
-        {/* <span>{scheme}</span> */}
       </div>
     </div>
   )

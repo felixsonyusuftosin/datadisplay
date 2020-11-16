@@ -36,7 +36,7 @@ const useDataDisplay = () => {
 
 const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
   const [state, dispatch] = useReducer(DataDisplayReducer, initState)
-  const [paginationParameters, setPaginationParameters] = useState(
+  const [filterParameters, setFilterParameters] = useState(
     paginationParameterContextDefaults
   )
   const [transactionsUrl, setTransactionsUrl] = useState('')
@@ -45,26 +45,26 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
   const constructPaginationUrlParameters = useCallback((): string => {
     const param = new URLSearchParams()
     const start =
-      paginationParameters.last && JSON.stringify(paginationParameters.last)
-    const limit = paginationParameters.limit
-    const from = paginationParameters.from.toISOString()
-    const to = paginationParameters.to.toISOString()
+      filterParameters.last && JSON.stringify(filterParameters.last)
+    const limit = filterParameters.limit
+    const from = filterParameters.from.toISOString()
+    const to = filterParameters.to.toISOString()
 
     if (start) {
       param.set('start', start)
     }
     param.set('limit', String(limit))
-    // param.set('from', from)
-    // param.set('to', to)
+    param.set('from', from)
+    param.set('to', to)
 
     return param.toString()
   }, [
-    paginationParameters.from,
-    paginationParameters.last,
-    paginationParameters.limit,
-    paginationParameters.to
+    filterParameters.from,
+    filterParameters.last,
+    filterParameters.limit,
+    filterParameters.to
   ])
-  
+
   // update local pagination parameters when context parameter changes to set the next url
   useEffect(() => {
     componentIsMountedRef.current = true
@@ -76,11 +76,15 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
     return () => {
       componentIsMountedRef.current = false
     }
-  }, [componentIsMountedRef, constructPaginationUrlParameters, paginationParameters])
+  }, [
+    componentIsMountedRef,
+    constructPaginationUrlParameters,
+    filterParameters
+  ])
 
   const resetPaginationData = () => {
     dispatch({ type: UPDATE_PAGINATION, payload: { ...initState.pagination } })
-    setPaginationParameters(paginationParameterContextDefaults)
+    setFilterParameters(paginationParameterContextDefaults)
   }
 
   // data clean up when component un mounts
@@ -88,9 +92,8 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
     componentIsMountedRef.current && resetPaginationData()
     return () => componentIsMountedRef.current && resetPaginationData()
   }, [componentIsMountedRef])
-  
 
-  const callback = useCallback(async (): Promise<TransactionItem[]| undefined> => {
+  const callback = useCallback(async (): Promise<TransactionItem[] | undefined> => {
     dispatch({ type: FETCHING_TRANSACTIONS })
     try {
       const { data } = await makeRestApiCall(transactionsUrl)
@@ -103,11 +106,12 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
         nextPage: last && JSON.stringify(last),
         limit: items.length
       }
+      
       dispatch({
         type: UPDATE_PAGINATION,
         payload: { ...newContextPagination }
       })
-      setPaginationParameters((p: any) => ({
+      setFilterParameters((p: any) => ({
         ...p,
         currentPage: p.currentPage += 1,
         last
@@ -116,7 +120,6 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
     } catch (error) {
       dispatch({ type: ERROR_FETCHING_TRANSACTIONS, payload: error.message })
     }
-
   }, [state.pagination, transactionsUrl])
 
   const contextValue = useMemo(
@@ -125,10 +128,10 @@ const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
       callback,
       transactionsUrl,
       resetPaginationData,
-      setPaginationParameters,
-      paginationParameters
+      setFilterParameters,
+      filterParameters
     }),
-    [state, callback, transactionsUrl, paginationParameters]
+    [state, callback, transactionsUrl, filterParameters]
   )
 
   return <DataDisplayContext.Provider value={contextValue} {...restProps} />

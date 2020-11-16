@@ -12,7 +12,7 @@ import {
 const defaultData: any[] = []
 const defaultDisplay: any[] = []
 
-type PaginationParameters = {
+type filterParameters = {
   currentPage: number
   last: null
   limit: number
@@ -30,8 +30,10 @@ export type AdapterRendererProps = {
   parameters: string
   AppLoader: React.FC<{}>
   resetPaginationData: () => void
-  setPaginationParameters?: React.Dispatch<React.SetStateAction<PaginationParameters>>
-  paginationParameters?: PaginationParameters
+  setFilterParameters?: React.Dispatch<
+    React.SetStateAction<filterParameters>
+  >
+  filterParameters?: filterParameters
 }
 
 const AdapterRenderer: React.FC<AdapterRendererProps> = ({
@@ -44,7 +46,7 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
   parameters = '',
   AppLoader,
   resetPaginationData,
-  paginationParameters
+  filterParameters
 }): ReactElement => {
   const container = useRef(null)
   const element = useRef(null)
@@ -86,7 +88,10 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     const reset = resetCallbackMethod
     const reference = callbackReference
     setAppLoading(true)
-    const response : TransactionItem[] = await callback.call(this, parameters)
+    resetElementContent()
+    setDataDisplay(defaultDisplay)
+    setDisplayItems([])
+    const response: TransactionItem[] = await callback.call(this, parameters)
     reset(reference)
     setElementContent(pagination.currentPage, response)
     setDataDisplay(d => [...d, pagination.currentPage])
@@ -140,6 +145,17 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination, parameters])
+
+  useEffect(() => {
+    if (
+      filterParameters?.to &&
+      filterParameters?.from &&
+      pagination.currentPage !== 0
+    ) {
+      fetchInitialData()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterParameters?.to, filterParameters?.from])
 
   useEffect(() => {
     if (container.current && element.current) {
