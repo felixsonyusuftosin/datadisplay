@@ -150,8 +150,18 @@ nav .filter:hover {
 
 .table-head {
   text-transform: uppercase;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  font-weight: 700;
   line-height: 1.5rem;
   letter-spacing:1px;
   color:#0E4366;
+}
+
+.table-head .column { 
+  font-size: 1.2rem;
+  font-weight: 700; 
+}
+
+.column:nth-child(6) {
+  text-align:center;
 }

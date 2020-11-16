@@ -8,3 +8,9 @@
 .table-container {
   width: 100%;
 }  
+
+.card-type-image { 
+  width: 100px;
+  height: 50px;
+  object-fit: contain;
+}

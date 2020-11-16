@@ -1,0 +1,14 @@
+.filter-container {
+  display: fixed;
+  right: -100%;
+  transition:right 0.3s ease-in;
+  -webkit-transition:right 0.3s ease-in;
+  -moz-transition:right 0.3s ease-in;
+  -ms-transition:right 0.3s ease-in;
+  -o-transition:right 0.3s ease-in;
+  -webkit-transition:right 0.3s ease-in ;
+  display: none;
+  background-color:#fff;
+  z-index: 100;
+  width:15%;
+}

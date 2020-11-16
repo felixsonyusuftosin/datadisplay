@@ -1,8 +1,10 @@
 .data-row {
   height:60px;
+  cursor: pointer;
   box-sizing:border-box;
-  font-size:1.2rem;
-  border-bottom:solid 1px rgba(0,0,0,0.1);
+  font-size:1.0rem;
+  border-bottom:solid 1px rgba(0,0,0,0.08);
+  color:#8D8E92;
   padding: 0px 40px;
   box-sizing:border-box;
 }
@@ -10,8 +12,27 @@
   height: 100%;
   padding: 0px;
   line-height: 60px;
+  text-transform:capitalize;
 }
 .skeleton  {
   height: 40px;
   width: 100%;
+}
+.bolder { 
+  font-weight: 600;
+}
+
+.align-center{ 
+  margin-left: auto;
+  text-align:center;
+}
+.center {
+  display:flex;
+  align-items: center;
+  justify-content:center;
+}
+.data-row:nth-child(even) {background: rgba(0,0,0,0.004);;}
+.data-row:nth-child(odd) {background: rgba(0,0,0,0.04);}
+.data-row:hover {
+  background: rgba(0,0,0,0.06)
 }
