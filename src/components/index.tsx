@@ -7,11 +7,8 @@ import DateFilter from './dataDisplay/DateFilter/DateFilter'
 import { useDataDisplay } from './context/DataDisplay.context'
 
 const DataDisplay = () => {
-  const {
-    setFilterParameters,
-    filterParameters
-  } = useDataDisplay() as any
-  const { from, to } = filterParameters
+  const { setFilterParameters, filterParameters } = useDataDisplay() as any
+  const { from, to } = filterParameters || {}
   const [open, setOpen] = useState(false)
   const toggleModal = () => setOpen(!open)
   return (
@@ -22,12 +19,14 @@ const DataDisplay = () => {
         onClose={toggleModal}
         aria-labelledby='date-control'
         aria-describedby='toggle-date-control'>
-        <DateFilter
-          from={from}
-          to={to}
-          setDateFilter={setFilterParameters}
-          toggleFilter={toggleModal}
-        />
+        <div>
+          <DateFilter
+            from={from}
+            to={to}
+            setDateFilter={setFilterParameters}
+            toggleFilter={toggleModal}
+          />
+        </div>
       </Modal>
       <Header toggleFilter={toggleModal} />
       <TableBody />

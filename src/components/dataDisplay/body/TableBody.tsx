@@ -16,8 +16,8 @@ export const TableBody = () => {
     setFilterParameters,
     filterParameters
   } = useDataDisplay() as any
-  const { pagination } = state
-  const { limit } = pagination
+  const { pagination } = state || {}
+  const { limit } = pagination || {}
   const styles: RendererStyles = {
     unitHeightOfRow: 60,
     totalLengthOfItems: limit

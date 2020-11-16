@@ -78,8 +78,8 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
   } = useAdapterRender()
 
   const refresh = () => {
-    resetPaginationData()
-    resetElementContent()
+    resetPaginationData && resetPaginationData()
+   resetElementContent && resetElementContent()
     setDataDisplay(defaultDisplay)
     setDisplayItems([])
   }
