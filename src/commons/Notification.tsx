@@ -25,7 +25,7 @@ export const Notification: React.FC<SnackbarProps> = ({message, context }) => {
     if (reason === 'clickaway') {
       return;
     }
-    setOpen(false);
+    setOpen(false); 
   }
   
 return (

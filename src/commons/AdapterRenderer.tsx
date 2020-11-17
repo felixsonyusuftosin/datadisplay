@@ -43,7 +43,7 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     filterUpdatedAt,
     errorFetchingInitialData,
     errorFetchingMoreData
-  } = state as ContextState
+  } = state as ContextState || {}
   const [dataDisplay, setDataDisplay] = useState(defaultData)
   const [isScrolling, setIsScrolling] = useState(false)
   const [displayItems, setDisplayItems] = useState(defaultDisplay)
@@ -142,7 +142,6 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
       } else {
         setErrorMessage((errorFetchingMoreData as string))
       }
-
       return 
     }
     setErrorMessage('')
@@ -150,7 +149,7 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
       setErrorMessage('')
     }
   }, [errorFetchingInitialData, errorFetchingMoreData])
-  console.log(errorMessage)
+
   return (
     <div id='container' ref={container} className='container'>
       <Notification context={NotificationTypes.error} message={errorMessage} />
