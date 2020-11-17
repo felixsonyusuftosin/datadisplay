@@ -9,3 +9,5 @@
 ### Architecture
 
 - The table was build using a popular concept of dynamic rendering with inifinite scroll, which means only those elements that are returned from the server are rendered at any time , we reuse the rendering Dom element by replacing fresh items into the DOM this helps reduce the probability of lags on the front end when rendering huge dynamically sized data.
+
+- In order to see the infinite scroll please use the custom filter to select a date before 2017
