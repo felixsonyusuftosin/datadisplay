@@ -6,7 +6,7 @@ import 'intersection-observer'
 import 'requestidlecallback'
 import AdapterRenderer from './AdapterRenderer'
 import AppLoader from '../components/dataDisplay/body/AppLoader';
-import { TransactionItem } from '../types'
+
 
 const server = setupServer(
   rest.get('/test', (req, res, ctx) => {
@@ -18,18 +18,6 @@ beforeAll(() => server.listen())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-const callback = async (url: string): Promise<TransactionItem[]> => {
-  const dataResponse = await fetch(url)
-  const data = await dataResponse.json()
-  return data
-}
-
-const pagination = {
-  currentPage: 1,
-  nextPage: 2,
-  totalPages: 10,
-  limit: 24,
-}
 
 const rendererStyles = {
   unitHeightOfRow: 50,
@@ -56,15 +44,10 @@ const Row = ({ ...props }: any) => {
 }
 
 const adapterRendererProps = {
-  callback,
-  pagination,
   styles: rendererStyles,
   LoaderElement,
   Row,
-  rowProps: {},
-  parameters: '/test',
-  AppLoader,
-  resetPaginationData: () => null
+  AppLoader
 }
 
 describe('AdapterRenderer', () => {

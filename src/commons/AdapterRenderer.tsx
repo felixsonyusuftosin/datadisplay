@@ -1,53 +1,54 @@
 import React, { useRef, useState, useEffect, ReactElement } from 'react'
 import useScrollObserver from '../hooks/useScrollObserver'
-import AdapterDisplay from '../commons/AdapterDisplay'
-import useAdapterRender from '../hooks/useAdapterRender'
+import AdapterDisplay from './AdapterDisplay'
+import { useDataDisplay } from '../components/context/DataDisplay.context'
 import {
-  MakeApiRequest,
-  Pagination,
   RendererStyles,
-  TransactionItem
+  TransactionItem,
+  ContextState,
+  NotificationTypes
 } from '../types'
+import Notification from './Notification'
 
-const defaultData: any[] = []
+const defaultData: any = {}
 const defaultDisplay: any[] = []
 
-type filterParameters = {
-  currentPage: number
-  last: null
-  limit: number
-  from: Date
-  to: Date
-}
-
 export type AdapterRendererProps = {
-  callback: MakeApiRequest
-  pagination: Pagination
   styles: RendererStyles
   LoaderElement: React.FC<{}>
   Row: React.FC<TransactionItem>
   rowProps?: unknown
-  parameters: string
   AppLoader: React.FC<{}>
-  resetPaginationData: () => void
-  setFilterParameters?: React.Dispatch<
-    React.SetStateAction<filterParameters>
-  >
-  filterParameters?: filterParameters
 }
 
 const AdapterRenderer: React.FC<AdapterRendererProps> = ({
   Row,
   styles,
-  callback,
-  pagination,
   LoaderElement,
   rowProps,
-  parameters = '',
-  AppLoader,
-  resetPaginationData,
-  filterParameters
+  AppLoader
 }): ReactElement => {
+  const {
+    state,
+    fetchInitialData,
+    fetchSubsequentPaginatedData,
+    resetDataWhenFilterChanges,
+    getData
+  } = useDataDisplay() as any
+
+  const {
+    filter,
+    appLoading,
+    moreLoading,
+    filterUpdatedAt,
+    errorFetchingInitialData,
+    errorFetchingMoreData
+  } = state as ContextState
+  const [dataDisplay, setDataDisplay] = useState(defaultData)
+  const [isScrolling, setIsScrolling] = useState(false)
+  const [displayItems, setDisplayItems] = useState(defaultDisplay)
+  const [errorMessage, setErrorMessage] = useState('')
+
   const container = useRef(null)
   const element = useRef(null)
 
@@ -56,107 +57,7 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     observedElement: element.current
   })
 
-  const [loading, setLoading] = useState(false)
-  const [appLoading, setAppLoading] = useState(false)
-  const [dataDisplay, setDataDisplay] = useState(defaultData)
-  const [displayItems, setDisplayItems] = useState(defaultDisplay)
-  const [isScrolling, setIsScrolling] = useState(false)
-
-  const {
-    callbackReference,
-    resetCallbackMethod
-  } = useScrollObserver(
-    htmlElements.containerElement,
-    htmlElements.observedElement,
-    () => setIsScrolling(true)
-  )
-
-  const {
-    setElementContent,
-    getElementContent,
-    resetElementContent
-  } = useAdapterRender()
-
-  const refresh = () => {
-    resetPaginationData && resetPaginationData()
-   resetElementContent && resetElementContent()
-    setDataDisplay(defaultDisplay)
-    setDisplayItems([])
-  }
-
-  const fetchInitialData = async () => {
-    const reset = resetCallbackMethod
-    const reference = callbackReference
-    setAppLoading(true)
-    resetElementContent()
-    setDataDisplay(defaultDisplay)
-    setDisplayItems([])
-    const response: TransactionItem[] = await callback.call(this, parameters)
-    reset(reference)
-    setElementContent(pagination.currentPage, response)
-    setDataDisplay(d => [...d, pagination.currentPage])
-    setAppLoading(false)
-    return
-  }
-
-  useEffect((): (() => void) => {
-    refresh()
-    return () => refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    const fetchData = async (): Promise<void> => {
-      const reference = callbackReference
-      const reset = resetCallbackMethod
-      if (pagination.nextPage && !loading && !appLoading) {
-        setLoading(true)
-        try {
-          const response = await callback.call(this, parameters)
-          reset(reference)
-          setElementContent(pagination.currentPage, response)
-          setDataDisplay(d => [...d, pagination.currentPage])
-          setLoading(false)
-          setIsScrolling(false)
-        } catch (err) {
-          reset(reference)
-          setIsScrolling(false)
-        }
-      }
-    }
-    if (isScrolling) {
-      fetchData()
-    }
-  }, [
-    appLoading,
-    callback,
-    callbackReference,
-    isScrolling,
-    loading,
-    pagination,
-    parameters,
-    resetCallbackMethod,
-    setElementContent
-  ])
-
-  useEffect(() => {
-    if (pagination.currentPage === 0 && !appLoading && !loading && parameters) {
-      fetchInitialData()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination, parameters])
-
-  useEffect(() => {
-    if (
-      filterParameters?.to &&
-      filterParameters?.from &&
-      pagination.currentPage !== 0
-    ) {
-      fetchInitialData()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterParameters?.to, filterParameters?.from])
-
+  // set this effect to set up ref on subsequent render
   useEffect(() => {
     if (container.current && element.current) {
       setHtmlElements({
@@ -166,30 +67,116 @@ const AdapterRenderer: React.FC<AdapterRendererProps> = ({
     }
   }, [container, element])
 
+  const { callbackReference, resetCallbackMethod } = useScrollObserver(
+    htmlElements.containerElement,
+    htmlElements.observedElement,
+    () => {
+      setIsScrolling(true)
+    }
+  )
+
+  // Effect to run when app just loads
+  useEffect(() => {
+    const fetchData = async () => {
+      const { currentPage } = (await fetchInitialData()) || {}
+      if (currentPage !== 0 && !currentPage) return
+      setDataDisplay((d: { key: string; value: number }) => ({
+        ...d,
+        [currentPage]: currentPage
+      }))
+    }
+    if (!appLoading) {
+      fetchData()
+    }
+    return () => {
+      setDataDisplay(defaultData)
+      setDisplayItems(defaultDisplay)
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Effect to run when user scrolls
+  useEffect(() => {
+    const fetchData = async () => {
+      const { currentPage } = (await fetchSubsequentPaginatedData()) || {}
+      if (currentPage !== 0 && !currentPage) return
+      setDataDisplay((d: { key: string; value: number }) => ({
+        ...d,
+        [currentPage]: currentPage
+      }))
+      resetCallbackMethod(callbackReference)
+      setIsScrolling(false)
+    }
+    if (isScrolling && !appLoading) {
+      fetchData()
+    }
+    return () => setIsScrolling(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isScrolling])
+
+  // Effect to run when filter changes
+  useEffect(() => {
+    const fetchData = async (from: Date, to: Date) => {
+      const { currentPage } = (await resetDataWhenFilterChanges(from, to)) || {}
+      if (currentPage !== 0 && !currentPage) return
+      setDataDisplay((d: { key: string; value: number }) => ({
+        [currentPage]: currentPage
+      }))
+    }
+    if (filterUpdatedAt && !appLoading) {
+      fetchData(filter.from, filter.to)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterUpdatedAt])
+
   const fetchRenderedItem = (callbackReference: number) => {
-    const elements = getElementContent(callbackReference) || []
+    const elements = getData(callbackReference) || []
     setDisplayItems(elements)
   }
 
+  useEffect(() => {
+    if (errorFetchingInitialData || errorFetchingMoreData) {
+      if (errorFetchingInitialData) {
+        setErrorMessage((errorFetchingInitialData as string) )
+      } else {
+        setErrorMessage((errorFetchingMoreData as string))
+      }
+
+      return 
+    }
+    setErrorMessage('')
+    return () => {
+      setErrorMessage('')
+    }
+  }, [errorFetchingInitialData, errorFetchingMoreData])
+  console.log(errorMessage)
   return (
     <div id='container' ref={container} className='container'>
+      <Notification context={NotificationTypes.error} message={errorMessage} />
       <div className='scroller'>
-        {dataDisplay?.map((pageItem, index) => (
-          <AdapterDisplay
-            key={index}
-            itemsLength={styles.totalLengthOfItems}
-            unitHeight={styles.unitHeightOfRow}
-            root={container.current}
-            callback={fetchRenderedItem}
-            selector={pageItem}>
-            {displayItems.map(dataItems => {
-              return <Row key={dataItems.id} {...dataItems} {...rowProps} />
-            })}
-          </AdapterDisplay>
-        ))}
+        {!appLoading && (
+          <>
+            {Object.keys(dataDisplay)?.map((pageItem, index) => (
+              <AdapterDisplay
+                key={index}
+                itemsLength={styles.totalLengthOfItems}
+                unitHeight={styles.unitHeightOfRow}
+                root={container.current}
+                callback={() => fetchRenderedItem(+pageItem)}
+                selector={+pageItem}>
+                {displayItems?.map(
+                  (dataItems: TransactionItem, index: number) => {
+                    return <Row key={index} {...dataItems} {...rowProps} />
+                  }
+                )}
+              </AdapterDisplay>
+            ))}
+          </>
+        )}
         {appLoading && <AppLoader />}
         <div ref={element} id='observed' className='observed'>
-          {loading ? <LoaderElement /> : ' '}
+          {moreLoading ? <LoaderElement /> : ' '}
         </div>
       </div>
     </div>

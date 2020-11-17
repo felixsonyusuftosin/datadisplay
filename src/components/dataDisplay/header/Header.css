@@ -54,7 +54,7 @@ nav .search-box .icon {
 nav .heading-row {
   display: grid;
   width: 100%;
-  grid-template-columns: 14% 14% 40% 30%;
+  grid-template-columns: 20% 2% 35% 41%;
   grid-column-gap: 10px;
 }
 .button-row-container {
@@ -90,9 +90,9 @@ nav .curved-button-row button:active {
   outline: none;
 }
 nav .details-container {
-  width: 80%;
+  width: 100%;
   display: grid;
-  grid-template-columns: 50% 24% 24%;
+  grid-template-columns: 80% 9% 9%;
   grid-column-gap: 10px;
   align-items: center;
   line-height: 40px;

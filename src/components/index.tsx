@@ -4,11 +4,8 @@ import Header from './dataDisplay/header/Header'
 import TableBody from './dataDisplay/body/TableBody'
 import Modal from '@material-ui/core/Modal'
 import DateFilter from './dataDisplay/DateFilter/DateFilter'
-import { useDataDisplay } from './context/DataDisplay.context'
 
 const DataDisplay = () => {
-  const { setFilterParameters, filterParameters } = useDataDisplay() as any
-  const { from, to } = filterParameters || {}
   const [open, setOpen] = useState(false)
   const toggleModal = () => setOpen(!open)
   return (
@@ -20,12 +17,7 @@ const DataDisplay = () => {
         aria-labelledby='date-control'
         aria-describedby='toggle-date-control'>
         <div>
-          <DateFilter
-            from={from}
-            to={to}
-            setDateFilter={setFilterParameters}
-            toggleFilter={toggleModal}
-          />
+          <DateFilter toggleFilter={toggleModal} />
         </div>
       </Modal>
       <Header toggleFilter={toggleModal} />

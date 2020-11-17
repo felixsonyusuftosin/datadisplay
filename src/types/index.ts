@@ -2,12 +2,6 @@
 export type MakeApiRequest = {
   (url: string): Promise<TransactionItem[]>
 }
-export type Pagination = {
-  currentPage: number | string
-  nextPage: string | number | null
-  totalPages?: number
-  limit: number
-}
 
 export type RendererStyles = {
   unitHeightOfRow: number
@@ -75,14 +69,31 @@ export type Transactions = {
   last?: LastTransaction
 }
 
-export type DataDisplayContextState = {
-  pagination: Pagination
-  fetchingTransactions: boolean
-  fetchedTransactions: Transactions | null
-  errorFetchingTransactions: string | null
-}
 
 export type HashType<T> = {
   key?: number | string
   value?: T
+}
+
+export type FilterType = {
+  currentPage: number | string
+  last?: LastTransaction
+  from: Date
+  to: Date
+  limit: number
+}
+export type ContextState = {
+  hashMap: Map<string | number, TransactionItem[]>
+  filter: FilterType
+  appLoading: boolean
+  moreLoading: boolean
+  filterUpdatedAt: Date | null
+  errorFetchingInitialData?: string
+  errorFetchingMoreData?: string
+}
+
+export enum NotificationTypes {
+  error = 'error',
+  info = 'info',
+  warning = 'warning'
 }

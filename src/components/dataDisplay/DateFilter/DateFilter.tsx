@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import 'date-fns'
 import './DateFilter.css'
 import Typography from '@material-ui/core/Typography'
@@ -9,33 +9,24 @@ import {
   KeyboardDatePicker,
   MuiPickersUtilsProvider
 } from '@material-ui/pickers'
-import { getLastYear } from '../../../utils/dates'
+import { useDataDisplay } from '../../context/DataDisplay.context'
+import { ContextState, FilterType } from '../../../types'
 
-type Filter = {
-  currentPage: number
-  last: null
-  limit: number
-  from: Date
-  to: Date
-}
 
 type FilterProps = {
   toggleFilter: () => void
-  from: string
-  to: string
-  setDateFilter: React.Dispatch<React.SetStateAction<Filter>>
 }
 
 const commonProps = {
   disableFuture: true
 }
 
-export const DateFilter: React.FC<FilterProps> = ({
-  toggleFilter,
-  from,
-  to,
-  setDateFilter
-}) => {
+export const DateFilter: React.FC<FilterProps> = ({ toggleFilter }) => {
+  const { state, setFilter } = useDataDisplay() as any
+
+  const { filter } = state as ContextState
+  const { from, to } = filter as FilterType
+
   const [fromDate, setFromDate] = useState(new Date(from))
   const [toDate, setToDate] = useState(new Date(to))
   const [fromDateProps, setFromDateProps] = useState({ maxDate: new Date(to) })
@@ -50,22 +41,13 @@ export const DateFilter: React.FC<FilterProps> = ({
     setFromDateProps({ maxDate: date })
   }
 
-  // useEffect(() => {
-  //   return () => {
-  //     setFromDate(getLastYear())
-  //     setToDate(new Date())
-  //     setFromDateProps({ maxDate: new Date() })
-  //     setToDateProps({ minDate: fromDate })
-  //   }
-  // })
-
   const handleSubmit = () => {
     if (fromDate && toDate) {
-      setDateFilter((filter: Filter) => ({
+      setFilter({
         ...filter,
         from: fromDate,
         to: toDate
-      }))
+      })
       toggleFilter()
     }
   }

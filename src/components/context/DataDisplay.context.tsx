@@ -1,23 +1,32 @@
 import React, {
   createContext,
   useContext,
-  useState,
-  useEffect,
   useReducer,
   useMemo,
-  useCallback,
-  useRef
+  useEffect,
+  useCallback
 } from 'react'
+import DataDisplayReducer from './DataDisplayReducer'
 import {
-  UPDATE_PAGINATION,
-  FETCHING_TRANSACTIONS,
-  FETCHED_TRANSACTIONS,
-  ERROR_FETCHING_TRANSACTIONS
-} from './action'
-import { TransactionItem, Transactions } from '../../types'
+  TransactionItem,
+  Transactions,
+  FilterType,
+  ContextState
+} from '../../types'
 import { makeRestApiCall } from '../makeApiRequest'
-import { DataDisplayReducer } from './DataDisplayReducer'
-import { paginationParameterContextDefaults, initState } from '../default.data'
+import { initState } from '../default.data'
+import {
+  UPDATE_FILTERS,
+  FETCHING_INITIAL_DATA,
+  ERROR_FETCHING_INITIAL_DATA,
+  DONE_FETCHING_INITIAL_DATA,
+  FETCHING_MORE_DATA,
+  ERROR_FETCHING_MORE_DATA,
+  DONE_FETCHING_MORE_DATA,
+  UPDATE_HASH_MAP,
+  FILTER_UPDATE_LOG,
+  CLEANUP
+} from './action'
 
 const DataDisplayContext: any = createContext({})
 const PROGRAM_ID = process.env.REACT_APP_PROGRAM_ID || ''
@@ -34,104 +43,149 @@ const useDataDisplay = () => {
   return context
 }
 
+type AsyncDataReturnType = { 
+  currentPage: number ,
+  data: TransactionItem[]
+}
+
 const DataDisplayProvider = ({ ...restProps }): typeof DataDisplayContext => {
   const [state, dispatch] = useReducer(DataDisplayReducer, initState)
-  const [filterParameters, setFilterParameters] = useState(
-    paginationParameterContextDefaults
-  )
-  const [transactionsUrl, setTransactionsUrl] = useState('')
-  const componentIsMountedRef = useRef(false)
 
-  const constructPaginationUrlParameters = useCallback((): string => {
+  const constructUrlFromFilters = (filter: FilterType): string => {
     const param = new URLSearchParams()
-    const start =
-      filterParameters.last && JSON.stringify(filterParameters.last)
-    const limit = filterParameters.limit
-    const from = filterParameters.from.toISOString()
-    const to = filterParameters.to.toISOString()
+    const start = filter.last && JSON.stringify(filter.last)
+    const limit = filter.limit
+    const from = filter.from.toISOString()
+    const to = filter.to.toISOString()
 
-    if (start) {
+    if (filter.last && start) {
       param.set('start', start)
     }
+
     param.set('limit', String(limit))
     param.set('from', from)
     param.set('to', to)
-
-    return param.toString()
-  }, [
-    filterParameters.from,
-    filterParameters.last,
-    filterParameters.limit,
-    filterParameters.to
-  ])
-
-  // update local pagination parameters when context parameter changes to set the next url
-  useEffect(() => {
-    componentIsMountedRef.current = true
-    if (componentIsMountedRef.current) {
-      const queryParameters = constructPaginationUrlParameters()
-      const computedUrl = `${url}?${queryParameters}`
-      setTransactionsUrl(() => computedUrl)
-    }
-    return () => {
-      componentIsMountedRef.current = false
-    }
-  }, [
-    componentIsMountedRef,
-    constructPaginationUrlParameters,
-    filterParameters
-  ])
-
-  const resetPaginationData = () => {
-    dispatch({ type: UPDATE_PAGINATION, payload: { ...initState.pagination } })
-    setFilterParameters(paginationParameterContextDefaults)
+    return `${url}?${param.toString()}`
   }
 
-  // data clean up when component un mounts
-  useEffect((): (() => void) => {
-    componentIsMountedRef.current && resetPaginationData()
-    return () => componentIsMountedRef.current && resetPaginationData()
-  }, [componentIsMountedRef])
-
-  const callback = useCallback(async (): Promise<TransactionItem[] | undefined> => {
-    dispatch({ type: FETCHING_TRANSACTIONS })
+  const fetchInitialData = useCallback(async ():Promise<AsyncDataReturnType|undefined> => {
+    const hash: Map<string | number, TransactionItem[]> = new Map()
+    const newInitState = { ...initState}
+    const defaultFilter = newInitState.filter
+    const url = constructUrlFromFilters(defaultFilter)
+    dispatch({ type: FETCHING_INITIAL_DATA })
     try {
-      const { data } = await makeRestApiCall(transactionsUrl)
-
-      dispatch({ type: FETCHED_TRANSACTIONS, payload: data })
-      const { last, items } = data as Transactions
-      const newContextPagination = {
-        ...state.pagination,
-        currentPage: +state.pagination.currentPage + 1,
-        nextPage: last && JSON.stringify(last),
-        limit: items.length
-      }
-      
-      dispatch({
-        type: UPDATE_PAGINATION,
-        payload: { ...newContextPagination }
-      })
-      setFilterParameters((p: any) => ({
-        ...p,
-        currentPage: p.currentPage += 1,
+      const { data } = await makeRestApiCall(url)
+      const { last, items = [] } = data as Transactions
+      const newFilter: FilterType = {
+        ...defaultFilter,
+        currentPage: 0,
+        limit: items.length,
         last
-      }))
-      return data.items
-    } catch (error) {
-      dispatch({ type: ERROR_FETCHING_TRANSACTIONS, payload: error.message })
+      }
+      hash.set(0, items)
+
+      dispatch({ type: UPDATE_FILTERS, payload: newFilter })
+      dispatch({ type: DONE_FETCHING_INITIAL_DATA })
+      dispatch({ type: UPDATE_HASH_MAP, payload: hash })
+      return { currentPage: newFilter.currentPage, data: items } as AsyncDataReturnType
+    } catch (err) {
+      dispatch({ type: ERROR_FETCHING_INITIAL_DATA, payload: err.message })
     }
-  }, [state.pagination, transactionsUrl])
+  }, [])
+
+  const fetchSubsequentPaginatedData = useCallback(async ():Promise<AsyncDataReturnType|undefined> => {
+    const hash = state.hashMap
+    const { filter } = state as ContextState
+    const copyFilter = { ...filter}
+    if (!copyFilter.last) {
+      return undefined
+    }
+    const url = constructUrlFromFilters(copyFilter)
+    dispatch({ type: FETCHING_MORE_DATA })
+    try {
+      const { data } = await makeRestApiCall(url)
+      const { last, items = [] } = data as Transactions
+      const { currentPage } = copyFilter as FilterType
+      const newPage = (currentPage as number) + 1
+      const newFilter = { ...copyFilter, currentPage: newPage, last, limit: items.length}
+      hash.set(newPage, items)
+      dispatch({ type: UPDATE_FILTERS, payload: newFilter })
+      dispatch({ type: DONE_FETCHING_MORE_DATA })
+      dispatch({ type: UPDATE_HASH_MAP, payload: hash })
+      return { currentPage: newFilter.currentPage, data: items } as AsyncDataReturnType
+    } catch (err) {
+      dispatch({ type: ERROR_FETCHING_MORE_DATA, payload: err.message })
+    }
+  }, [state])
+
+  const resetDataWhenFilterChanges = useCallback(
+    async (from: Date, to: Date): Promise<AsyncDataReturnType | undefined> => {
+      const hash: Map<string | number, TransactionItem[]> = new Map()
+      const copyFilter = { ...initState.filter}
+      const defaultFilter = copyFilter
+      const url = constructUrlFromFilters({ ...defaultFilter, last: undefined, from, to })
+      dispatch({ type: FETCHING_INITIAL_DATA })
+      try {
+        const { data } = await makeRestApiCall(url)
+        const { last, items = [] } = data as Transactions
+        const newFilter: FilterType = {
+          ...defaultFilter,
+          from,
+          to,
+          currentPage: 0,
+          last,
+          limit: items.length
+        }
+        hash.set(0, items)
+        dispatch({ type: UPDATE_HASH_MAP, payload: hash })
+        dispatch({ type: UPDATE_FILTERS, payload: newFilter })
+        dispatch({ type: DONE_FETCHING_INITIAL_DATA })
+        return { currentPage: newFilter.currentPage, data: items } as AsyncDataReturnType
+      } catch (err) {
+        dispatch({ type: ERROR_FETCHING_INITIAL_DATA, payload: err.message })
+      }
+    },
+    []
+  )
+
+  const setFilter = useCallback((filter: FilterType) => { 
+    dispatch({ type: UPDATE_FILTERS, payload: filter })
+    dispatch({ type: FILTER_UPDATE_LOG})
+  },[])
+
+  const getData = useCallback(
+    (key: string | number): TransactionItem[] => {
+      const hash = state.hashMap
+      const value = hash.get(key as number)
+      return value as TransactionItem[]
+    },
+    [state.hashMap]
+  )
+  // clean up
+  useEffect(() => {
+    return () => { 
+      dispatch({type: CLEANUP })
+    }
+  },[])
 
   const contextValue = useMemo(
     () => ({
       state,
-      callback,
-      transactionsUrl,
-      resetPaginationData,
-      setFilterParameters,
-      filterParameters
+      setFilter,
+      fetchInitialData,
+      fetchSubsequentPaginatedData,
+      resetDataWhenFilterChanges,
+      getData
     }),
-    [state, callback, transactionsUrl, filterParameters]
+    [
+      state,
+      setFilter,
+      fetchInitialData,
+      fetchSubsequentPaginatedData,
+      resetDataWhenFilterChanges,
+      getData
+    ]
   )
 
   return <DataDisplayContext.Provider value={contextValue} {...restProps} />

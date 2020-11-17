@@ -1,24 +1,19 @@
 
-import { DataDisplayContextState, Pagination } from '../types';
+import { ContextState } from '../types';
 import { getFirstDayOfYear } from '../utils/dates';
 
-export const paginationParameterContextDefaults = {
+
+export const initState: ContextState = {
+  hashMap: new Map(),
+  filter: {
     currentPage: 0,
-    last: null,
-    limit: 24,
     from: getFirstDayOfYear(),
-    to: new Date()
-}
-
-export const defaultPagination: Pagination = {
-  limit: 0,
-  currentPage: 0,
-  nextPage: null
-}
-
- export const initState: DataDisplayContextState = {
-  pagination: defaultPagination,
-  fetchingTransactions: false,
-  fetchedTransactions: null,
-  errorFetchingTransactions: null
+    to: new Date(),
+    limit: 24
+  },
+  filterUpdatedAt: null,
+  appLoading: false,
+  moreLoading: false,
+  errorFetchingInitialData: undefined,
+  errorFetchingMoreData: undefined
 }
