@@ -1,4 +1,4 @@
-# Technical Challenge
+# How to run
 
 - install dependencies by running `npm install`
 - Run a development build via docker `npm run build-dev` and navigate to `http://localhost:3000`
